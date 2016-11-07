@@ -17,7 +17,7 @@ mi5Logger.start();
 
 var mi5rest = require('./../models/mi5rest').instance;
 
-describe('Test mi5rest API', function(){
+describe.skip('Test mi5rest API', function(){
   it('#_checkServer()', function(){
   	return mi5rest._checkServer();
   });

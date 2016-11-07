@@ -7,15 +7,33 @@ block content
         p= error.code
         p= error.errno
         p= error.syscal
-    
+
      if module
       div.row
         div.col-lg-12
           h1.page-header Output Module
-           
+
+
       div.row
         div.col-lg-9
-          div.panel.panel-default 
+          if !module.automaticModeActive
+            if module.automaticModeAvailable
+              div.alert.alert-warning
+                span.glyphicon.glyphicon-pause
+                strong  Attention:
+                |  Automatic mode is available but inactive. Press&nbsp;
+                a.glyphicon.glyphicon-play(onclick="socket.emit('socketUserChangeMode', true);", style="cursor: pointer")
+                |  to activate it.
+          else
+            div.alert.alert-warning
+              span.glyphicon.glyphicon-play
+              strong  Attention:
+              |  Automatic mode is active. Press&nbsp;
+              a.glyphicon.glyphicon-pause(onclick="socket.emit('socketUserChangeMode', true);", style="cursor: pointer")
+              |  to deactivate it.
+
+
+          div.panel.panel-default
             div.panel-heading
               i.fa.fa-clock-o.fa-fw
               | Next Task on this Module
@@ -29,17 +47,17 @@ block content
                   div.timeline-panel
                     div.timeline-heading
                       h4.timeline-title
-                        span.text-muted(id=module.SkillInput[0].Execute.containerId+'text') Waiting to get a task. 
+                        span.text-muted(id=module.SkillInput[0].Execute.containerId+'text') Waiting to get a task.
                       script.
                         function executeIsTrue(){
-                            $("##{module.SkillInput[0].Execute.containerId}icon").removeClass('fa-cog fa-spin'); 
+                            $("##{module.SkillInput[0].Execute.containerId}icon").removeClass('fa-cog fa-spin');
                             $("##{module.SkillInput[0].Execute.containerId}icon").addClass('fa-check');
                             $("##{module.SkillInput[0].Execute.containerId}badge").addClass('success');
                             $("##{module.SkillInput[0].Execute.containerId}text").html('Task received.');
                           }
                         socket.on("#{module.SkillInput[0].Execute.updateEvent}", function(data){
                           if(data === true){
-                            executeIsTrue();                            
+                            executeIsTrue();
                           }
                         });
                         // Static information
@@ -47,7 +65,7 @@ block content
                           console.log('mmExecute.value true beforehand');
                           executeIsTrue();
                         }
-                              
+
                 //- Start Button
                 li.timeline-inverted
                   div.timeline-badge(id=module.SkillOutput[0].Busy.containerId+'badge', onclick="socket.emit('#{module.SkillOutput[0].Busy.submitEvent}', true);", style="cursor: pointer")
@@ -55,23 +73,30 @@ block content
                   div.timeline-panel
                     div.timeline-heading
                       h4.timeline-title
-                        span.text-muted(id=module.SkillOutput[0].Busy.containerId+'text') Press when you are ready to start working.
+                        if module.automaticModeActive
+                          span.text-muted(id=module.SkillOutput[0].Busy.containerId+'text') Automatic mode active.
+                        else
+                          span.text-muted(id=module.SkillOutput[0].Busy.containerId+'text') Press when you are ready to start working.
                       script.
                         function busyIsTrue(){
                           $("##{module.SkillOutput[0].Busy.containerId}icon").addClass('fa-check');
                           $("##{module.SkillOutput[0].Busy.containerId}badge").addClass('success');
                           $("##{module.SkillOutput[0].Busy.containerId}text").html('Started...');
                         }
-                        socket.on("#{module.SkillOutput[0].Busy.updateEvent}", function(data){ 
+                        function automaticModuleExecutionMessage(message){
+                          $("##{module.SkillOutput[0].Busy.containerId}text").html(message);
+                        }
+                        socket.on("automaticModuleExecutionMessage", automaticModuleExecutionMessage);
+                        socket.on("#{module.SkillOutput[0].Busy.updateEvent}", function(data){
                           if(data === true){
-                            busyIsTrue();                            
+                            busyIsTrue();
                           }
                         });
-                        if(#{module.SkillOutput[0].Busy.value}===true){ 
+                        if(#{module.SkillOutput[0].Busy.value}===true){
                           console.log('mmBusy.value true');
                           busyIsTrue();
                         }
-            
+
                 li.timeline-inverted
                   div.timeline-badge(id=module.SkillOutput[0].Done.containerId+'badge', onclick="socket.emit('#{module.SkillOutput[0].Done.submitEvent}', {value: true});", style="cursor: pointer")
                     i.fa.fa-stop
@@ -83,29 +108,29 @@ block content
                        var userFullyFinished = 0; // global in DOM space? yes.
                        function doneIsTrue(){
                          $("##{module.SkillOutput[0].Done.containerId}badge").addClass('success');
-                         $("##{module.SkillOutput[0].Done.containerId}text").html('Done.');                         
+                         $("##{module.SkillOutput[0].Done.containerId}text").html('Done.');
                        }
-                       socket.on("#{module.SkillOutput[0].Done.updateEvent}", function(data){ 
+                       socket.on("#{module.SkillOutput[0].Done.updateEvent}", function(data){
                          if(data === true){
-                           doneIsTrue();                           
+                           doneIsTrue();
                          }
                        });
-                       if(#{module.SkillOutput[0].Done.value}===true){ 
+                       if(#{module.SkillOutput[0].Done.value}===true){
                          console.log('mmDone.value true');
                          doneIsTrue();
                        }
-                       
+
               script.
                socket.on("reloadPageOutput", function(data){
                 console.log('Page Reload...');
-                window.location.replace("/output"); 
+                window.location.replace("/output");
                });
-        
+
         //- MessageFeed
         //- div.col-lg-3
           //- +messageFeed-panel()
     else
-        div.col-xs-12.well       
+        div.col-xs-12.well
             p no handModule data to display
     
     

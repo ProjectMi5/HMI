@@ -39,6 +39,8 @@ module = function() {
   this.opc = require('./../models/simpleOpcua').server(CONFIG.OPCUAOutputModule);
   console.log(preLog() + 'endpoint', CONFIG.OPCUAOutputModule);
 
+  this.automaticModule = require('./mi5OutputModuleAutomatic').newAutomaticOutput;
+
   this.Mi5ModuleInterface = require('./../models/simpleDataTypeMapping.js').Mi5ModuleInterface;
 };
 exports.newOutputModule = new module();
@@ -52,7 +54,7 @@ module.prototype.start = function(callback) {
 
   self.initialize(function(err) {
     if (!err) {
-      console.log('Output Module is connected');
+      console.log('Output Module is connected to OPC UA server');
       self.getModuleData(function(err) {
         if (!err) {
           self.subscribe();
@@ -64,10 +66,46 @@ module.prototype.start = function(callback) {
       callback(err);
     }
   });
-}
+
+  self.automaticModule.start();
+  observeAutomaticModule();
+  self.automaticModule.on('message', function(message){
+      io.to(self.socketRoom).emit('automaticModuleExecutionMessage', message);
+  });
+
+  /**
+   *  observe automatic module
+   *
+   */
+  function observeAutomaticModule(){
+    self.automaticModule.once('active', function(){
+      console.log(preLog(), 'Automatic Module active');
+      self.jadeData.automaticModeAvailable = true;
+      self.jadeData.automaticModeActive = true;
+      self.automaticModule.once('close', automaticModuleDisconnectedEvent);
+      self.automaticModule.once('reconnect', automaticModuleDisconnectedEvent);
+    });
+  }
+
+  /**
+   * function called when automatic module disconnect event occurs
+   *
+   */
+  function automaticModuleDisconnectedEvent(){
+    if(self.automaticModule.busy)
+      io.to(self.socketRoom).emit('automaticModule', 'error while being busy');
+    self.jadeData.automaticModeAvailable = true;
+    self.jadeData.automaticModeActive = false;
+    self.automaticModule.start();
+    observeAutomaticModule();
+  }
+
+};
+
+
 
 /**
- * initialize maintenance module opcua connection
+ * initialize output module opcua connection
  * 
  * @param callback
  */
@@ -143,7 +181,7 @@ module.prototype.makeItReady = function(callbackMain) {
     callbackMain();
   } ]);
 
-}
+};
 
 // /////////////////////////////////////////////////////////////////
 // OPC UA Subscriptions
@@ -198,8 +236,15 @@ module.prototype.onExecuteChange = function(data) {
   var self = mi5Output; // since it is called before getModuleData
 
   if (data.value.value === true) {
+    self.jadeData.SkillInput[0].Execute.value = true;
     io.to(self.socketRoom).emit(self.jadeData.SkillInput[0].Execute.updateEvent, true);
     io.to(self.socketRoom).emit('reloadPageOutput', 0);
+    if(self.jadeData.automaticModeActive){
+      self.automaticModule.execute();
+      _.bindAll(self, 'socketUserIsBusy', 'socketUserIsDone');
+      self.automaticModule.once('done', self.socketUserIsDone);
+      self.socketUserIsBusy();
+    }
     // Navbar
     io.emit('outputRequired', true);
   }
@@ -232,13 +277,20 @@ module.prototype.ioRegister = function(socket) {
 
   socket.on(self.jadeData.SkillOutput[0].Busy.submitEvent, self.socketUserIsBusy);
   socket.on(self.jadeData.SkillOutput[0].Done.submitEvent, self.socketUserIsDone);
+  socket.on('socketUserChangeMode', socketUserChangeMode);
+
+  function socketUserChangeMode(){
+    console.log(preLog(), 'User wants to change the mode.');
+    self.jadeData.automaticModeActive = !self.jadeData.automaticModeActive;
+    io.to(self.socketRoom).emit('reloadPageOutput', 1);
+  }
 
   console.log(preLog() + 'OK - Output Module - event listeners registered');
 };
 
 module.prototype.socketUserIsBusy = function() {
   var self = this;
-
+  console.log('busy');
   if(self.jadeData.SkillInput[0].Execute.value == true){
     console.log(preLog() + 'OK - User is busy');
     self.setValue(self.jadeData.SkillOutput[0].Busy.nodeId, true, function() {
