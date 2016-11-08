@@ -18,15 +18,19 @@ block content
         div.col-lg-9
           if !module.automaticModeActive
             if module.automaticModeAvailable
-              div.alert.alert-warning
-                span.glyphicon.glyphicon-pause
-                strong  Attention:
-                |  Automatic mode is available but inactive.&nbsp;
-                if module.automaticModeConnected
+              if module.automaticModeConnected
+                div.alert.alert-warning
+                  span.glyphicon.glyphicon-pause
+                  strong  Attention:
+                  |  Automatic mode is available but inactive.&nbsp;
                   | Press&nbsp;
                   a.glyphicon.glyphicon-play(onclick="socket.emit('socketUserChangeMode', true);", style="cursor: pointer")
                   |  to activate it.
-                else
+              else
+                div.alert.alert-danger
+                  span.glyphicon.glyphicon-pause
+                  strong  Attention:
+                  |  Automatic mode is available but inactive.&nbsp;
                   | The module seems to be disconnected.
             else
               div.alert.alert-danger.alert-dismissable.fade.in(role='alert')
@@ -80,20 +84,28 @@ block content
                 //- Start Button
                 li.timeline-inverted
                   div.timeline-badge(id=module.SkillOutput[0].Busy.containerId+'badge', onclick="socket.emit('#{module.SkillOutput[0].Busy.submitEvent}', true);", style="cursor: pointer")
-                    i.fa.fa-play
+                    i.fa.fa-play(id=module.SkillOutput[0].Busy.containerId+'icon')
                   div.timeline-panel
                     div.timeline-heading
                       h4.timeline-title
                         if module.automaticModeActive
                           span.text-muted(id=module.SkillOutput[0].Busy.containerId+'text') Automatic mode active.
+                          script.
+                            function busyIsTrue() {
+                              $("##{module.SkillOutput[0].Busy.containerId}icon").removeClass('fa-play');
+                              $("##{module.SkillOutput[0].Busy.containerId}icon").addClass('fa-cog fa-spin');
+                              $("##{module.SkillOutput[0].Busy.containerId}badge").addClass('success');
+                              $("##{module.SkillOutput[0].Busy.containerId}text").html('Started... Waiting for response by Camera Module.');
+                              }
                         else
                           span.text-muted(id=module.SkillOutput[0].Busy.containerId+'text') Press when you are ready to start working.
+                          script.
+                            function busyIsTrue() {
+                              $("##{module.SkillOutput[0].Busy.containerId}icon").addClass('fa-check');
+                              $("##{module.SkillOutput[0].Busy.containerId}badge").addClass('success');
+                              $("##{module.SkillOutput[0].Busy.containerId}text").html('Started...');
+                            }
                       script.
-                        function busyIsTrue(){
-                          $("##{module.SkillOutput[0].Busy.containerId}icon").addClass('fa-check');
-                          $("##{module.SkillOutput[0].Busy.containerId}badge").addClass('success');
-                          $("##{module.SkillOutput[0].Busy.containerId}text").html('Started...');
-                        }
                         function automaticModuleExecutionMessage(message){
                           $("##{module.SkillOutput[0].Busy.containerId}text").html(message);
                         }
@@ -118,6 +130,8 @@ block content
                       script.
                        var userFullyFinished = 0; // global in DOM space? yes.
                        function doneIsTrue(){
+                         $("##{module.SkillOutput[0].Busy.containerId}icon").removeClass('fa-cog fa-spin');
+                         $("##{module.SkillOutput[0].Busy.containerId}icon").addClass('fa-check');
                          $("##{module.SkillOutput[0].Done.containerId}badge").addClass('success');
                          $("##{module.SkillOutput[0].Done.containerId}text").html('Done.');
                        }
