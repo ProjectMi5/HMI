@@ -34,8 +34,8 @@ For example:
 
 ## Automatic Output Module
 
-The automatic output module connects to a camera via zeroMQ. 
-Installing zeroMQ can be quite a challange.
+The automatic output module connects to a camera via [zeroMQ](http://zeromq.org/). 
+Installing zeroMQ can be quite a challange. Have a look at the [SVN](https://www.itq.de/svn/mi5_new/Project_Showcase_Mi5/Camera_Output/Dokumentation/) for some installation files mentioned below.
 
 1. Install [Python 2.7](http://www.python.org/) (tested with v2.7.12), and update path in System control panel to match installation directory, the installer does not do this automatically.
 2. Use the zeroMQ installer for Windows downloadable [here](http://zeromq.org/distro:microsoft-windows) (tested: [ZeroMQ-4.0.4~miru1.0-x64.exe](http://miru.hk/archive/ZeroMQ-4.0.4~miru1.0-x64.exe))
