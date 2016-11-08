@@ -21,11 +21,22 @@ block content
               div.alert.alert-warning
                 span.glyphicon.glyphicon-pause
                 strong  Attention:
-                |  Automatic mode is available but inactive. Press&nbsp;
-                a.glyphicon.glyphicon-play(onclick="socket.emit('socketUserChangeMode', true);", style="cursor: pointer")
-                |  to activate it.
+                |  Automatic mode is available but inactive.&nbsp;
+                if module.automaticModeConnected
+                  | Press&nbsp;
+                  a.glyphicon.glyphicon-play(onclick="socket.emit('socketUserChangeMode', true);", style="cursor: pointer")
+                  |  to activate it.
+                else
+                  | The module seems to be disconnected.
+            else
+              div.alert.alert-danger.alert-dismissable.fade.in(role='alert')
+                button.close(type='button', data-dismiss='alert', aria-label='Close')
+                  span(aria-hidden='true') ×
+                span.glyphicon.glyphicon-stop
+                strong  Attention:
+                |  Automatic mode is not available. Either "zeroMQ" is not installed or it is disabled by configuration.
           else
-            div.alert.alert-warning
+            div.alert.alert-success
               span.glyphicon.glyphicon-play
               strong  Attention:
               |  Automatic mode is active. Press&nbsp;

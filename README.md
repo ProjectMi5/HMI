@@ -1,4 +1,3 @@
-
 # HMI Master
 
 The HMI for the Mi5 HMI
@@ -6,9 +5,9 @@ Currently developing the Serviceskill Interface.
 
 ## Installation
 
-1. Download and install [Node.js](http://nodejs.org/download/) (tested with v0.10.0 - see in the HMI SVN repository hmi/programs for installer)
+1. Download and install [Node.js](http://nodejs.org/download/) (runs only with node v0.12.17)
 2. Download an clone the repository. Make sure you have the 
-   [briefcase-branche](https://github.com/ProjectMi5/HMI/tree/briefcase)
+   [briefcase-branch](https://github.com/ProjectMi5/HMI/tree/briefcase)
 3. In a command line window, browse in the repository and execute
   1. `npm install` // this installs the required node modules for the HMI
   2. `npm intsall forever -g` // this installs the forever module globally
@@ -33,8 +32,32 @@ For example:
 
 * _node app.js -server=hmitest_ (this will use Port 80)
 
+## Automatic Output Module
+
+The automatic output module connects to a camera via zeroMQ. 
+Installing zeroMQ can be quite a challange.
+
+1. Install [Python 2.7](http://www.python.org/) (tested with v2.7.12), and update path in System control panel to match installation directory, the installer does not do this automatically.
+2. Use the zeroMQ installer for Windows downloadable [here](http://zeromq.org/distro:microsoft-windows) (tested: [ZeroMQ-4.0.4~miru1.0-x64.exe](http://miru.hk/archive/ZeroMQ-4.0.4~miru1.0-x64.exe))
+3. Install the [Windows Software Development Kit](https://developer.microsoft.com/de-de/windows/downloads/windows-10-sdk) (testet with Windows 10.0.14393.33)
+4. Make sure _Visual Studo 2013 C++_ is installed. (Not sure if this is necessary.)
+4. Restart your PC.
+5. In the command prompt, run `node -v`, `npm -v`, as well as `python --version` and make sure to use node version 0.12.17, npm version 4.0.2 and Python 2.7.12.
+6. In the command prompt, navigate to the HMI folder.
+7. Run `npm install zmq`. The _zmq.node_ file binds _zmq_ to the right version of _node.js_.
+
+To use the Automatic Output Module, it is finally required, to add the following lines to the _config.js_ file.
+
+```javascript
+  config.AutomaticOutputModule        = "tcp://localhost:5555";
+  config.EnableAutomaticOutputModule  = true;
+  config.AutomaticOutputModuleAttempts  = 3;
+ ```
+
+If you want to test the Automatic Output Module, run the file _./examples/zeroMQserver.js_ while the HMI is running.
+
 ## Revision
-Last Update: 2015-03-04 Thomas Frei
+Last Update: 2016-11-08 Dominik Serve
 
 ---
 Deprecated below.

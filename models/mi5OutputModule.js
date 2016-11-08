@@ -19,6 +19,7 @@ var assert = require('assert');
  * @returns
  */
 module = function() {
+  var self = this;
   this.NumberOfSkillInputs = 2; // 15 max, but only 2 needed!
   this.NumberOfParameterInputs = 1; // 5 max
 
@@ -39,7 +40,29 @@ module = function() {
   this.opc = require('./../models/simpleOpcua').server(CONFIG.OPCUAOutputModule);
   console.log(preLog() + 'endpoint', CONFIG.OPCUAOutputModule);
 
-  this.automaticModule = require('./mi5OutputModuleAutomatic').newAutomaticOutput;
+  if(CONFIG.EnableAutomaticOutputModule){
+    // test if automatic module is available
+    try {
+      var zmq = require('zmq');
+      console.log(preLog(),'available.');
+      self.jadeData.automaticModeAvailable = true;
+    } catch (e){
+      self.jadeData.automaticModeAvailable = false;
+      if(e.code == 'MODULE_NOT_FOUND'){
+        console.log(preLog(), 'Automatic mode is not available. Please install node_module "zmq" first.');
+      }
+      else
+        console.log(preLog(),e);
+    }
+  } else {
+    self.jadeData.automaticModeAvailable = false;
+  }
+
+
+
+  // and require it if available
+  if(self.jadeData.automaticModeAvailable)
+    this.automaticModule = require('./mi5OutputModuleAutomatic').newAutomaticOutput;
 
   this.Mi5ModuleInterface = require('./../models/simpleDataTypeMapping.js').Mi5ModuleInterface;
 };
@@ -67,23 +90,33 @@ module.prototype.start = function(callback) {
     }
   });
 
-  self.automaticModule.start();
-  observeAutomaticModule();
-  self.automaticModule.on('message', function(message){
+  if(self.jadeData.automaticModeAvailable){
+    self.automaticModule.start();
+    observeAutomaticModule();
+    self.automaticModule.on('message', function(message){
       io.to(self.socketRoom).emit('automaticModuleExecutionMessage', message);
-  });
+    });
+  }
 
   /**
    *  observe automatic module
    *
    */
   function observeAutomaticModule(){
-    self.automaticModule.once('active', function(){
+    self.automaticModule.on('active', function(){
       console.log(preLog(), 'Automatic Module active');
       self.jadeData.automaticModeAvailable = true;
       self.jadeData.automaticModeActive = true;
-      self.automaticModule.once('close', automaticModuleDisconnectedEvent);
-      self.automaticModule.once('reconnect', automaticModuleDisconnectedEvent);
+      self.jadeData.automaticModeConnected = true;
+      io.to(self.socketRoom).emit('reloadPageOutput', 0);
+    });
+    self.automaticModule.once('active', function(){
+      self.automaticModule.on('inactive', function(){
+        self.jadeData.automaticModeAvailable = true;
+        self.jadeData.automaticModeActive = false;
+        io.to(self.socketRoom).emit('reloadPageOutput', 0);
+      });
+      self.automaticModule.on('disconnect', automaticModuleDisconnectedEvent);
     });
   }
 
@@ -96,8 +129,9 @@ module.prototype.start = function(callback) {
       io.to(self.socketRoom).emit('automaticModule', 'error while being busy');
     self.jadeData.automaticModeAvailable = true;
     self.jadeData.automaticModeActive = false;
-    self.automaticModule.start();
-    observeAutomaticModule();
+    self.jadeData.automaticModeConnected = false;
+    io.to(self.socketRoom).emit('reloadPageOutput', 0);
+    //self.automaticModule.start();
   }
 
 };
