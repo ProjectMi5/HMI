@@ -37,22 +37,28 @@ module.prototype.start = function(){
     self.emit('active');
   });
   this.client.on('connect_retry', function (fd, ep) {
-    self.log('zeroMQ reconnecting to ' + ep);
-    self.emit('inactive');
-    self.emit('disconnect');
-    self.active = false;
+    if(self.active){
+      self.log('zeroMQ reconnecting to ' + ep);
+      self.emit('inactive');
+      self.emit('disconnect');
+      self.active = false;
+    }
   });
   this.client.on('close', function (fd, ep) {
-    self.log('zeroMQ connection with '+ep+' closed');
-    self.emit('inactive');
-    self.emit('disconnect');
-    self.active = false;
+    if(self.active){
+      self.log('zeroMQ connection with '+ep+' closed');
+      self.emit('inactive');
+      self.emit('disconnect');
+      self.active = false;
+    }
   });
   this.client.on('disconnect', function (fd, ep) {
-    self.log('zeroMQ connection with '+ep+' disconnected');
-    self.emit('inactive');
-    self.emit('disconnect');
-    self.active = false;
+    if(self.active){
+      self.log('zeroMQ connection with '+ep+' disconnected');
+      self.emit('inactive');
+      self.emit('disconnect');
+      self.active = false;
+    }
   });
   this.client.on('message', function(reply){
     console.log("Received reply: [", reply.toString(), ']');
