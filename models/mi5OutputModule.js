@@ -344,6 +344,9 @@ module.prototype.socketUserIsDone = function() {
     self.setValue(self.jadeData.SkillOutput[0].Done.nodeId, true, function (err) {
       console.log(preLog() + 'OK - User is done');
     });
+    if(self.automaticModule.busy){
+      self.automaticModule.reset();
+    }
     self.setValue(self.jadeData.SkillOutput[0].Busy.nodeId, false, function (err) {
       console.log(preLog() + 'OK - waiting for PT to set execute = false');
     });

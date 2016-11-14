@@ -89,6 +89,10 @@ module.prototype.execute = function(){
   this.client.send('execute');
   self.emit('message', 'Started... Waiting for response by Camera Module.');
   self.on('server_message', subscribed);
+  self.on('abort', function(){
+    self.removeListener('server_message', subscribed);
+    self.removeAllListeners('abort');
+  });
 
   function subscribed(message){
     console.log(message.toString());
@@ -100,6 +104,7 @@ module.prototype.execute = function(){
       if(attempt == self.numberOfAttempts-1){
         self.emit('done');
         self.removeListener('server_message',subscribed);
+        self.removeAllListeners('abort');
         self.busy = false;
         return;
       } else {
@@ -114,5 +119,13 @@ module.prototype.execute = function(){
     }
     self.client.send('execute');
   }
+
+};
+
+module.prototype.reset = function(){
+  this.client.send('reset');
+  this.removeAllListeners('done');
+  this.emit('abort');
+  this.busy = false;
 
 };
