@@ -102,10 +102,10 @@ module.prototype.execute = function(){
       var number = attempt +1;
       self.emit('message', 'Attempt ' + number + ' successful.');
       if(attempt == self.numberOfAttempts-1){
+        self.busy = false;
         self.emit('done');
         self.removeListener('server_message',subscribed);
         self.removeAllListeners('abort');
-        self.busy = false;
         return;
       } else {
         // attemt < self.numberOfAttempts
