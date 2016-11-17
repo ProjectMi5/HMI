@@ -315,6 +315,18 @@ module.prototype.ioRegister = function(socket) {
 
   function socketUserChangeMode(){
     console.log(preLog(), 'User wants to change the mode.');
+    if(self.jadeData.automaticModeActive){
+      if(self.automaticModule.busy){
+        self.automaticModule.reset();
+      }
+    } else {
+      if(self.jadeData.SkillInput[0].Execute.value){
+        self.automaticModule.execute();
+        _.bindAll(self, 'socketUserIsBusy', 'socketUserIsDone');
+        self.automaticModule.once('done', self.socketUserIsDone);
+        self.socketUserIsBusy();
+      }
+    }
     self.jadeData.automaticModeActive = !self.jadeData.automaticModeActive;
     io.to(self.socketRoom).emit('reloadPageOutput', 1);
   }
